@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的猫 - CatCat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .my-cats-page {
+            padding: 4rem 6rem;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 3rem;
+        }
+
+        .page-header h1 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 2.5rem;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* 统计卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .stat-info .value {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.75rem;
+            line-height: 1;
+        }
+
+        .stat-info .label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* 猫卡片网格 */
+        .cats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .cat-card {
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 4px 25px var(--shadow);
+            transition: all 0.5s var(--ease-out-expo);
+            position: relative;
+        }
+
+        .cat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px var(--shadow-strong);
+        }
+
+        .cat-card.current {
+            border: 3px solid var(--accent);
+        }
+
+        .cat-card.current::before {
+            content: '当前猫';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--accent);
+            color: var(--white);
+            padding: 0.375rem 0.875rem;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 10;
+        }
+
+        .cat-card-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .cat-card-content {
+            padding: 1.5rem;
+        }
+
+        .cat-card-content h3 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .cat-card-content .breed {
+            color: var(--accent);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .cat-dna-mini {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .dna-chip {
+            background: var(--bg-secondary);
+            padding: 0.25rem 0.625rem;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .cat-card-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .cat-card-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 0.75rem;
+            font-size: 0.8125rem;
+        }
+
+        /* 空状态 */
+        .empty-card {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--bg-tertiary);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+        }
+
+        .empty-card .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .empty-card h3 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-card p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .my-cats-page {
+                padding: 2rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧固定导航 -->
+    <nav class="side-nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-text">CatCat</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">
+                <span class="iconify" data-icon="lucide:home"></span>
+                <span>首页</span>
+            </a></li>
+            <li><a href="/breeds">
+                <span class="iconify" data-icon="lucide:search"></span>
+                <span>探索</span>
+            </a></li>
+            <li><a href="/adopt">
+                <span class="iconify" data-icon="lucide:heart"></span>
+                <span>领养</span>
+            </a></li>
+            <li class="active"><a href="/my-cats">
+                <span class="iconify" data-icon="lucide:cat"></span>
+                <span>我的猫</span>
+            </a></li>
+            <li><a href="/room">
+                <span class="iconify" data-icon="lucide:sofa"></span>
+                <span>房间</span>
+            </a></li>
+        </ul>
+        <div class="nav-user">
+            <a href="/login">
+                <span class="iconify" data-icon="lucide:user"></span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="my-cats-page">
+            <!-- 页面头部 -->
+            <header class="page-header">
+                <div>
+                    <h1>我的猫猫</h1>
+                    <p>你有 2 只猫，正在照顾 1 只</p>
+                </div>
+                <a href="/adopt" class="btn btn-primary">
+                    <span class="iconify" data-icon="lucide:plus"></span>
+                    领养新猫
+                </a>
+            </header>
+
+            <!-- 统计 -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="iconify" data-icon="lucide:cat"></span>
+                    </div>
+                    <div class="stat-info">
+                        <div class="value">2</div>
+                        <div class="label">我的猫猫</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="iconify" data-icon="lucide:heart"></span>
+                    </div>
+                    <div class="stat-info">
+                        <div class="value">1</div>
+                        <div class="label">当前猫咪</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <span class="iconify" data-icon="lucide:calendar"></span>
+                    </div>
+                    <div class="stat-info">
+                        <div class="value">15</div>
+                        <div class="label">在一块儿的天</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 猫卡片 -->
+            <div class="cats-grid">
+                <!-- 当前猫 -->
+                <article class="cat-card current">
+                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500" alt="小橘" class="cat-card-image">
+                    <div class="cat-card-content">
+                        <h3>小橘</h3>
+                        <p class="breed">英国短毛猫</p>
+                        <div class="cat-dna-mini">
+                            <span class="dna-chip">橘色</span>
+                            <span class="dna-chip">虎斑</span>
+                            <span class="dna-chip">绿眼</span>
+                        </div>
+                        <div class="cat-card-actions">
+                            <a href="/room" class="btn btn-primary">
+                                <span class="iconify" data-icon="lucide:home"></span>
+                                进房间
+                            </a>
+                            <button class="btn btn-outline">
+                                <span class="iconify" data-icon="lucide:settings"></span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 第二只猫 -->
+                <article class="cat-card">
+                    <img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=500" alt="雪球" class="cat-card-image">
+                    <div class="cat-card-content">
+                        <h3>雪球</h3>
+                        <p class="breed">波斯猫</p>
+                        <div class="cat-dna-mini">
+                            <span class="dna-chip">白色</span>
+                            <span class="dna-chip">纯色</span>
+                            <span class="dna-chip">蓝眼</span>
+                        </div>
+                        <div class="cat-card-actions">
+                            <button class="btn btn-outline" onclick="setCurrent(this)">
+                                <span class="iconify" data-icon="lucide:star"></span>
+                                设为当前
+                            </button>
+                            <button class="btn btn-outline">
+                                <span class="iconify" data-icon="lucide:settings"></span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 空状态 -->
+                <div class="empty-card">
+                    <div class="icon-wrapper">
+                        <span class="iconify" data-icon="lucide:plus" style="font-size: 2rem;"></span>
+                    </div>
+                    <h3>还缺一只猫？</h3>
+                    <p>去领养一只吧</p>
+                    <a href="/adopt" class="btn btn-primary">
+                        <span class="iconify" data-icon="lucide:heart"></span>
+                        去领养
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="/"><span class="iconify" data-icon="lucide:home"></span></a>
+        <a href="/breeds"><span class="iconify" data-icon="lucide:search"></span></a>
+        <a href="/adopt"><span class="iconify" data-icon="lucide:heart"></span></a>
+        <a href="/my-cats"><span class="iconify" data-icon="lucide:cat"></span></a>
+        <a href="/room"><span class="iconify" data-icon="lucide:sofa"></span></a>
+    </nav>
+
+    <script>
+        function setCurrent(btn) {
+            // 移除所有当前标记
+            document.querySelectorAll('.cat-card').forEach(card => {
+                card.classList.remove('current');
+                card.querySelector('h3').textContent = card.querySelector('h3').textContent.replace(' ★', '');
+            });
+
+            // 设置当前
+            const card = btn.closest('.cat-card');
+            card.classList.add('current');
+
+            // 更新按钮文字
+            const allBtns = document.querySelectorAll('.cat-card-actions .btn-outline');
+            allBtns.forEach(b => {
+                b.innerHTML = '<span class="iconify" data-icon="lucide:star"></span> 设为当前';
+            });
+            btn.innerHTML = '<span class="iconify" data-icon="lucide:check"></span> 当前猫';
+        }
+    </script>
+</body>
+</html>

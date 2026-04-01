@@ -1,0 +1,44 @@
+data_dir = ""
+language = "zh"
+
+[[projects]]
+  name = "catcat"
+  [projects.agent]
+    type = "claudecode"
+    [projects.agent.options]
+      mode = "default"
+      work_dir = "D:\\my-project\\catcat"
+
+  [[projects.platforms]]
+    type = "feishu"
+    [projects.platforms.options]
+      allow_from = "*"
+      app_id = "cli_a94c8e58937a1cc8"
+      app_secret = "nXu2VcB0gNgGSBRuvBzWcbyZs42DXFPx"
+
+[log]
+  level = ""
+
+[speech]
+  enabled = false
+  provider = ""
+  language = ""
+  [speech.openai]
+    api_key = ""
+    base_url = ""
+    model = ""
+  [speech.groq]
+    api_key = ""
+    model = ""
+  [speech.qwen]
+    api_key = ""
+    base_url = ""
+    model = ""
+
+[display]
+
+[stream_preview]
+
+[rate_limit]
+
+[cron]

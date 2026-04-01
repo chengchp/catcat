@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云领养 - CatCat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .adopt-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            background:
+                radial-gradient(ellipse at top, var(--bg-secondary) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+
+        .adopt-card {
+            background: var(--white);
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: 0 30px 80px var(--shadow-strong);
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .adopt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent));
+        }
+
+        .adopt-header {
+            margin-bottom: 2rem;
+        }
+
+        .adopt-header h1 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .adopt-header p {
+            color: var(--text-secondary);
+        }
+
+        /* 猫猫展示区 */
+        .cat-display {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .cat-avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 6px solid var(--bg-secondary);
+            box-shadow: 0 15px 40px var(--shadow);
+            transition: all 0.6s var(--ease-out-expo);
+        }
+
+        .cat-avatar.revealed {
+            border-color: var(--accent);
+            animation: bounce 0.6s var(--ease-out-back);
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .cat-avatar.randomizing {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .cat-question-mark {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin: 0 auto;
+        }
+
+        /* DNA 信息 */
+        .cat-dna {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin: 2rem 0;
+        }
+
+        .dna-item {
+            background: var(--bg-secondary);
+            padding: 0.75rem;
+            border-radius: 12px;
+        }
+
+        .dna-item .label {
+            font-family: var(--font-display);
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .dna-item .value {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        /* 名字输入 */
+        .name-input-wrapper {
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .name-input-wrapper label {
+            display: block;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--bg-tertiary);
+            border-radius: 16px;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* 操作按钮 */
+        .adopt-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .adopt-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 步骤提示 */
+        .adopt-steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -1.5rem;
+            width: 1rem;
+            height: 2px;
+            background: var(--bg-tertiary);
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .step.active .step-num {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .step.done .step-num {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .step.done .step-num::before {
+            content: '';
+            width: 10px;
+            height: 5px;
+            border-left: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(-45deg);
+            margin-top: -2px;
+        }
+
+        .step-label {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .step.active .step-label,
+        .step.done .step-label {
+            color: var(--text-primary);
+        }
+
+        /* 成功状态 */
+        .success-content {
+            display: none;
+        }
+
+        .success-content.visible {
+            display: block;
+        }
+
+        .initial-content.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧固定导航 -->
+    <nav class="side-nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-text">CatCat</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">
+                <span class="iconify" data-icon="lucide:home"></span>
+                <span>首页</span>
+            </a></li>
+            <li><a href="/breeds">
+                <span class="iconify" data-icon="lucide:search"></span>
+                <span>探索</span>
+            </a></li>
+            <li class="active"><a href="/adopt">
+                <span class="iconify" data-icon="lucide:heart"></span>
+                <span>领养</span>
+            </a></li>
+            <li><a href="/my-cats">
+                <span class="iconify" data-icon="lucide:cat"></span>
+                <span>我的猫</span>
+            </a></li>
+            <li><a href="/room">
+                <span class="iconify" data-icon="lucide:sofa"></span>
+                <span>房间</span>
+            </a></li>
+        </ul>
+        <div class="nav-user">
+            <a href="/login">
+                <span class="iconify" data-icon="lucide:user"></span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="adopt-page">
+            <!-- 步骤指示 -->
+            <div class="adopt-steps">
+                <div class="step active" id="step1">
+                    <div class="step-num">1</div>
+                    <div class="step-label">随机抽取</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-num">2</div>
+                    <div class="step-label">起名字</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-num">3</div>
+                    <div class="step-label">带回家</div>
+                </div>
+            </div>
+
+            <!-- 领养卡片 -->
+            <div class="adopt-card">
+                <!-- 初始/抽卡状态 -->
+                <div class="initial-content" id="initialContent">
+                    <div class="adopt-header">
+                        <h1>云领养</h1>
+                        <p>命运的齿轮开始转动...</p>
+                    </div>
+
+                    <div class="cat-display">
+                        <div class="cat-question-mark" id="questionMark">?</div>
+                        <img src="" alt="你的猫" class="cat-avatar" id="catAvatar" style="display: none;">
+                    </div>
+
+                    <p id="catInfo" style="color: var(--text-muted); font-size: 0.875rem;">
+                        点击下方按钮，随机领取一只猫
+                    </p>
+
+                    <div class="adopt-actions">
+                        <button class="btn btn-primary" id="adoptBtn" onclick="startAdopt()">
+                            <span class="iconify" data-icon="lucide:sparkles"></span>
+                            开始领养
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 成功状态 -->
+                <div class="success-content" id="successContent">
+                    <div class="adopt-header">
+                        <h1>恭喜！</h1>
+                        <p>你领养了一只猫</p>
+                    </div>
+
+                    <div class="cat-display">
+                        <img src="" alt="你的猫" class="cat-avatar revealed" id="finalAvatar">
+                    </div>
+
+                    <h2 id="catName" style="font-family: var(--font-display); font-weight: 900; margin-bottom: 0.25rem;"></h2>
+                    <p id="catBreed" style="color: var(--text-secondary); margin-bottom: 1rem;"></p>
+
+                    <div class="cat-dna" id="catDna"></div>
+
+                    <div class="name-input-wrapper">
+                        <label for="nameInput">给它起个名字</label>
+                        <input type="text" id="nameInput" class="name-input" placeholder="输入名字...">
+                    </div>
+
+                    <div class="adopt-actions">
+                        <button class="btn btn-outline" onclick="resetAdopt()">
+                            <span class="iconify" data-icon="lucide:refresh-cw"></span>
+                            重新抽
+                        </button>
+                        <button class="btn btn-primary" onclick="confirmAdopt()">
+                            <span class="iconify" data-icon="lucide:home"></span>
+                            带回家
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const cats = [
+            { name: '小橘', breed: '英国短毛猫', image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400', dna: { color: '橘色', pattern: '虎斑', eyes: '绿色' } },
+            { name: '雪球', breed: '波斯猫', image: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400', dna: { color: '白色', pattern: '纯色', eyes: '蓝色' } },
+            { name: '毛毛', breed: '缅因猫', image: 'https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400', dna: { color: '棕色', pattern: '虎斑', eyes: '金色' } },
+            { name: '团子', breed: '布偶猫', image: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=400', dna: { color: '奶油色', pattern: '重点色', eyes: '蓝色' } },
+            { name: '阿暹', breed: '暹罗猫', image: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400', dna: { color: '奶油色', pattern: '重点色', eyes: '蓝色' } },
+        ];
+
+        let currentCat = null;
+
+        function startAdopt() {
+            const questionMark = document.getElementById('questionMark');
+            const catAvatar = document.getElementById('catAvatar');
+            const catInfo = document.getElementById('catInfo');
+            const adoptBtn = document.getElementById('adoptBtn');
+
+            questionMark.style.display = 'none';
+            catAvatar.style.display = 'block';
+            catAvatar.classList.add('randomizing');
+            catInfo.textContent = '命运抽签中...';
+            adoptBtn.disabled = true;
+
+            // 随机切换图片制造悬念
+            let switchCount = 0;
+            const switchInterval = setInterval(() => {
+                const randomCat = cats[Math.floor(Math.random() * cats.length)];
+                catAvatar.src = randomCat.image;
+                switchCount++;
+                if (switchCount >= 10) {
+                    clearInterval(switchInterval);
+                    // 最终选定
+                    currentCat = cats[Math.floor(Math.random() * cats.length)];
+                    showResult();
+                }
+            }, 150);
+        }
+
+        function showResult() {
+            const catAvatar = document.getElementById('catAvatar');
+            const catInfo = document.getElementById('catInfo');
+            const adoptBtn = document.getElementById('adoptBtn');
+            const initialContent = document.getElementById('initialContent');
+            const successContent = document.getElementById('successContent');
+            const finalAvatar = document.getElementById('finalAvatar');
+            const catDna = document.getElementById('catDna');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+
+            catAvatar.classList.remove('randomizing');
+            catAvatar.classList.add('revealed');
+
+            setTimeout(() => {
+                initialContent.classList.add('hidden');
+                successContent.classList.add('visible');
+
+                finalAvatar.src = currentCat.image;
+                document.getElementById('catName').textContent = currentCat.name;
+                document.getElementById('catBreed').textContent = currentCat.breed;
+
+                catDna.innerHTML = `
+                    <div class="dna-item">
+                        <div class="label">毛色</div>
+                        <div class="value">${currentCat.dna.color}</div>
+                    </div>
+                    <div class="dna-item">
+                        <div class="label">花纹</div>
+                        <div class="value">${currentCat.dna.pattern}</div>
+                    </div>
+                    <div class="dna-item">
+                        <div class="label">眼睛</div>
+                        <div class="value">${currentCat.dna.eyes}</div>
+                    </div>
+                `;
+
+                step1.classList.remove('active');
+                step1.classList.add('done');
+                step2.classList.add('active');
+
+                adoptBtn.disabled = false;
+            }, 600);
+        }
+
+        function resetAdopt() {
+            const initialContent = document.getElementById('initialContent');
+            const successContent = document.getElementById('successContent');
+            const questionMark = document.getElementById('questionMark');
+            const catAvatar = document.getElementById('catAvatar');
+            const catInfo = document.getElementById('catInfo');
+            const adoptBtn = document.getElementById('adoptBtn');
+            const steps = document.querySelectorAll('.step');
+
+            initialContent.classList.remove('hidden');
+            successContent.classList.remove('visible');
+            questionMark.style.display = 'flex';
+            catAvatar.style.display = 'none';
+            catAvatar.classList.remove('revealed');
+            catInfo.textContent = '点击下方按钮，随机领取一只猫';
+            adoptBtn.disabled = false;
+
+            steps.forEach((step, i) => {
+                step.classList.remove('active', 'done');
+                if (i === 0) step.classList.add('active');
+            });
+
+            currentCat = null;
+        }
+
+        function confirmAdopt() {
+            const name = document.getElementById('nameInput').value.trim() || currentCat.name;
+            alert(`${name} 已经成为你的猫了！去房间看看它吧~`);
+            // 实际应该跳转到 /my-cats 或 /room
+        }
+    </script>
+</body>
+</html>

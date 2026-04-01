@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的房间 - CatCat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .room-page {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 2rem;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* 房间主区域 */
+        .room-main {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 4px 30px var(--shadow);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .room-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .room-title h1 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.5rem;
+        }
+
+        .room-title .editable-name {
+            background: var(--bg-secondary);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.875rem;
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .room-actions .btn {
+            padding: 0.625rem 1rem;
+            font-size: 0.8125rem;
+        }
+
+        /* 当前猫信息 */
+        .current-cat-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .current-cat-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent);
+        }
+
+        .current-cat-info h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .current-cat-info h4 .iconify {
+            color: var(--accent);
+        }
+
+        .current-cat-info p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* 房间画布 */
+        .room-canvas {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(180deg, #F0E6DD 0%, #E5DDD4 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid var(--bg-tertiary);
+        }
+
+        /* 地板 */
+        .room-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 35%;
+            background: linear-gradient(180deg, #D4C4B0 0%, #C9B99A 100%);
+            border-top: 3px solid #B8A88A;
+        }
+
+        /* 地板纹理 */
+        .room-floor::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 40px,
+                rgba(0,0,0,0.03) 40px,
+                rgba(0,0,0,0.03) 80px
+            );
+        }
+
+        /* 墙壁装饰 */
+        .room-wall-area {
+            position: absolute;
+            top: 8%;
+            left: 10%;
+            right: 10%;
+            height: 50%;
+            border: 2px dashed rgba(139, 115, 85, 0.15);
+            border-radius: 12px;
+        }
+
+        /* 猫猫在房间 */
+        .room-cat {
+            position: absolute;
+            bottom: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 5;
+        }
+
+        .room-cat img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--white);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            animation: catIdle 3s ease-in-out infinite;
+        }
+
+        @keyframes catIdle {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .room-cat-name {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* 家具 */
+        .room-furniture {
+            position: absolute;
+            font-size: 2.5rem;
+            cursor: grab;
+            transition: transform 0.3s var(--ease-out-expo);
+            filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.15));
+            user-select: none;
+        }
+
+        .room-furniture:hover {
+            transform: scale(1.15);
+        }
+
+        .room-furniture.selected {
+            outline: 3px dashed var(--accent);
+            outline-offset: 8px;
+            border-radius: 8px;
+        }
+
+        /* 家具面板 */
+        .furniture-panel {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 30px var(--shadow);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-header h3 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-header h3 .iconify {
+            color: var(--accent);
+        }
+
+        /* 家具网格 */
+        .furniture-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .furniture-item {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: var(--bg-primary);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-out-expo);
+            padding: 0.5rem;
+        }
+
+        .furniture-item:hover {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .furniture-item .icon {
+            font-size: 2rem;
+        }
+
+        .furniture-item .name {
+            font-family: var(--font-display);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* 提示 */
+        .panel-tips {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+
+        .panel-tips h4 {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .panel-tips ul {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding-left: 1rem;
+            list-style: disc;
+        }
+
+        .panel-tips li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* 删除按钮 */
+        .delete-furniture {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .delete-furniture .btn {
+            width: 100%;
+            justify-content: center;
+            background: #FFF0F0;
+            color: #E57373;
+            border: 1px solid #FFCDD2;
+        }
+
+        .delete-furniture .btn:hover {
+            background: #FFCDD2;
+        }
+
+        @media (max-width: 900px) {
+            .room-page {
+                grid-template-columns: 1fr;
+            }
+
+            .furniture-panel {
+                position: fixed;
+                bottom: 80px;
+                left: 0;
+                right: 0;
+                border-radius: 24px 24px 0 0;
+                max-height: 50vh;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧固定导航 -->
+    <nav class="side-nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-text">CatCat</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">
+                <span class="iconify" data-icon="lucide:home"></span>
+                <span>首页</span>
+            </a></li>
+            <li><a href="/breeds">
+                <span class="iconify" data-icon="lucide:search"></span>
+                <span>探索</span>
+            </a></li>
+            <li><a href="/adopt">
+                <span class="iconify" data-icon="lucide:heart"></span>
+                <span>领养</span>
+            </a></li>
+            <li><a href="/my-cats">
+                <span class="iconify" data-icon="lucide:cat"></span>
+                <span>我的猫</span>
+            </a></li>
+            <li class="active"><a href="/room">
+                <span class="iconify" data-icon="lucide:sofa"></span>
+                <span>房间</span>
+            </a></li>
+        </ul>
+        <div class="nav-user">
+            <a href="/login">
+                <span class="iconify" data-icon="lucide:user"></span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <div class="room-page">
+            <!-- 房间主区域 -->
+            <div class="room-main">
+                <header class="room-header">
+                    <div class="room-title">
+                        <h1>我的房间</h1>
+                        <input type="text" class="editable-name" value="小橘的小窝">
+                    </div>
+                    <div class="room-actions">
+                        <button class="btn btn-outline">
+                            <span class="iconify" data-icon="lucide:rotate-ccw"></span>
+                            重置
+                        </button>
+                        <button class="btn btn-primary">
+                            <span class="iconify" data-icon="lucide:save"></span>
+                            保存
+                        </button>
+                    </div>
+                </header>
+
+                <!-- 当前猫 -->
+                <div class="current-cat-banner">
+                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200" alt="小橘" class="current-cat-avatar">
+                    <div class="current-cat-info">
+                        <h4>
+                            <span class="iconify" data-icon="lucide:heart"></span>
+                            小橘
+                        </h4>
+                        <p>英国短毛猫 · 正在休息中</p>
+                    </div>
+                </div>
+
+                <!-- 房间画布 -->
+                <div class="room-canvas" id="roomCanvas">
+                    <div class="room-floor"></div>
+                    <div class="room-wall-area"></div>
+
+                    <!-- 猫 -->
+                    <div class="room-cat">
+                        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200" alt="小橘">
+                        <div class="room-cat-name">小橘</div>
+                    </div>
+
+                    <!-- 家具 -->
+                    <div class="room-furniture" style="bottom: 18%; left: 15%;" data-id="1">🛏️</div>
+                    <div class="room-furniture" style="bottom: 12%; left: 45%;" data-id="2">🍽️</div>
+                    <div class="room-furniture" style="bottom: 22%; right: 20%;" data-id="3">🎾</div>
+                </div>
+            </div>
+
+            <!-- 家具面板 -->
+            <aside class="furniture-panel">
+                <div class="panel-header">
+                    <h3>
+                        <span class="iconify" data-icon="lucide:package"></span>
+                        家具
+                    </h3>
+                </div>
+
+                <div class="furniture-grid">
+                    <button class="furniture-item" onclick="addFurniture('🛏️')">
+                        <span class="icon">🛏️</span>
+                        <span class="name">猫床</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🍽️')">
+                        <span class="icon">🍽️</span>
+                        <span class="name">食盆</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🎾')">
+                        <span class="icon">🎾</span>
+                        <span class="name">玩具球</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🧸')">
+                        <span class="icon">🧸</span>
+                        <span class="name">玩偶</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🏠')">
+                        <span class="icon">🏠</span>
+                        <span class="name">猫窝</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🌿')">
+                        <span class="icon">🌿</span>
+                        <span class="name">植物</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('🪵')">
+                        <span class="icon">🪵</span>
+                        <span class="name">猫抓板</span>
+                    </button>
+                    <button class="furniture-item" onclick="addFurniture('💡')">
+                        <span class="icon">💡</span>
+                        <span class="name">夜灯</span>
+                    </button>
+                </div>
+
+                <div class="panel-tips">
+                    <h4>
+                        <span class="iconify" data-icon="lucide:lightbulb"></span>
+                        布置小贴士
+                    </h4>
+                    <ul>
+                        <li>点击家具选中</li>
+                        <li>拖拽移动位置</li>
+                        <li>家具全部免费</li>
+                    </ul>
+                </div>
+
+                <div class="delete-furniture">
+                    <button class="btn" onclick="removeFurniture()" id="deleteBtn" disabled>
+                        <span class="iconify" data-icon="lucide:trash-2"></span>
+                        删除选中
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="/"><span class="iconify" data-icon="lucide:home"></span></a>
+        <a href="/breeds"><span class="iconify" data-icon="lucide:search"></span></a>
+        <a href="/adopt"><span class="iconify" data-icon="lucide:heart"></span></a>
+        <a href="/my-cats"><span class="iconify" data-icon="lucide:cat"></span></a>
+        <a href="/room"><span class="iconify" data-icon="lucide:sofa"></span></a>
+    </nav>
+
+    <script>
+        let furnitureCount = 3;
+        let selectedFurniture = null;
+
+        // 家具点击选择
+        document.querySelectorAll('.room-furniture').forEach(f => {
+            f.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectFurniture(this);
+            });
+        });
+
+        function selectFurniture(el) {
+            document.querySelectorAll('.room-furniture').forEach(f => f.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedFurniture = el;
+            document.getElementById('deleteBtn').disabled = false;
+        }
+
+        // 点击空白取消选择
+        document.getElementById('roomCanvas').addEventListener('click', function() {
+            document.querySelectorAll('.room-furniture').forEach(f => f.classList.remove('selected'));
+            selectedFurniture = null;
+            document.getElementById('deleteBtn').disabled = true;
+        });
+
+        // 添加家具
+        function addFurniture(emoji) {
+            furnitureCount++;
+            const room = document.getElementById('roomCanvas');
+            const item = document.createElement('div');
+            item.className = 'room-furniture';
+            item.textContent = emoji;
+            item.dataset.id = furnitureCount;
+            item.style.bottom = (10 + Math.random() * 15) + '%';
+            item.style.left = (10 + Math.random() * 50) + '%';
+            item.style.right = 'auto';
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectFurniture(this);
+            });
+            room.appendChild(item);
+        }
+
+        // 删除选中家具
+        function removeFurniture() {
+            if (selectedFurniture) {
+                selectedFurniture.remove();
+                selectedFurniture = null;
+                document.getElementById('deleteBtn').disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>

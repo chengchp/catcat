@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英国短毛猫 - CatCat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&family=DM+Sans:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <style>
+        .breed-detail-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            padding: 4rem 6rem;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .breed-hero-image {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px var(--shadow-strong);
+        }
+
+        .breed-hero-image img {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+        }
+
+        .breed-badge {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breed-content {
+            max-width: 480px;
+        }
+
+        .breed-content .origin-flag {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .breed-content h1 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 3rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .breed-content .description {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .breed-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 1.25rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-box .label {
+            font-family: var(--font-display);
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-box .value {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .breed-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .breed-tag {
+            padding: 0.5rem 1rem;
+            background: var(--white);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* 详情内容区 */
+        .breed-detail-content {
+            padding: 4rem 6rem;
+            background: var(--bg-secondary);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 4rem;
+        }
+
+        .content-section {
+            margin-bottom: 3rem;
+        }
+
+        .content-section h2 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-section h2 .iconify {
+            color: var(--accent);
+        }
+
+        .content-section p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .care-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .care-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+
+        .care-item .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .care-item h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .care-item p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* 侧边栏 */
+        .sidebar-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px var(--shadow);
+            position: sticky;
+            top: 100px;
+        }
+
+        .sidebar-card h3 {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .adopt-preview {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .adopt-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 1rem;
+            border: 4px solid var(--white);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .adopt-preview h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .adopt-preview p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 900px) {
+            .breed-detail-header {
+                grid-template-columns: 1fr;
+                padding: 2rem;
+            }
+
+            .breed-detail-content {
+                padding: 2rem;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .breed-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧固定导航 -->
+    <nav class="side-nav">
+        <a href="/" class="nav-logo">
+            <span class="logo-text">CatCat</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">
+                <span class="iconify" data-icon="lucide:home"></span>
+                <span>首页</span>
+            </a></li>
+            <li><a href="/breeds">
+                <span class="iconify" data-icon="lucide:search"></span>
+                <span>探索</span>
+            </a></li>
+            <li><a href="/adopt">
+                <span class="iconify" data-icon="lucide:heart"></span>
+                <span>领养</span>
+            </a></li>
+            <li><a href="/my-cats">
+                <span class="iconify" data-icon="lucide:cat"></span>
+                <span>我的猫</span>
+            </a></li>
+            <li><a href="/room">
+                <span class="iconify" data-icon="lucide:sofa"></span>
+                <span>房间</span>
+            </a></li>
+        </ul>
+        <div class="nav-user">
+            <a href="/login">
+                <span class="iconify" data-icon="lucide:user"></span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- Hero 区域 -->
+        <section class="breed-detail-header">
+            <div class="breed-hero-image">
+                <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800" alt="英国短毛猫">
+                <span class="breed-badge">
+                    <span class="iconify" data-icon="lucide:star"></span>
+                    热门品种
+                </span>
+            </div>
+            <div class="breed-content">
+                <p class="origin-flag">🇬🇧</p>
+                <h1>英国短毛猫</h1>
+                <p class="description">圆滚滚的身子，丧心病狂的颜值，还有永远吃不饱的胃。英国短毛猫 = 行走的糯米团子。</p>
+
+                <div class="breed-stats">
+                    <div class="stat-box">
+                        <div class="label">体重</div>
+                        <div class="value">4-8 kg</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">寿命</div>
+                        <div class="value">12-17 年</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">体型</div>
+                        <div class="value">中型</div>
+                    </div>
+                </div>
+
+                <div class="breed-tags">
+                    <span class="breed-tag">短毛</span>
+                    <span class="breed-tag">不掉毛</span>
+                    <span class="breed-tag">安静</span>
+                    <span class="breed-tag">独立</span>
+                    <span class="breed-tag">适合公寓</span>
+                </div>
+
+                <a href="/adopt?breed=british-shorthair" class="btn btn-primary">
+                    <span class="iconify" data-icon="lucide:heart"></span>
+                    领养同款
+                </a>
+            </div>
+        </section>
+
+        <!-- 详情内容 -->
+        <section class="breed-detail-content">
+            <div class="content-grid">
+                <div class="main-content">
+                    <div class="content-section">
+                        <h2>
+                            <span class="iconify" data-icon="lucide:heart"></span>
+                            性格特征
+                        </h2>
+                        <p>英短的性格像退休老干部，能躺着绝不坐着。它们的活动量很小，每天最大的运动就是翻身。</p>
+                        <p>但别被外表骗了——它们其实很会察言观色，只是懒得理你而已。</p>
+                    </div>
+
+                    <div class="content-section">
+                        <h2>
+                            <span class="iconify" data-icon="lucide:shower"></span>
+                            饲养要点
+                        </h2>
+                        <div class="care-list">
+                            <div class="care-item">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="lucide:utensils"></span>
+                                </div>
+                                <div>
+                                    <h4>控制饮食</h4>
+                                    <p>英短是易胖体质，必须控制食量，否则会胖成球</p>
+                                </div>
+                            </div>
+                            <div class="care-item">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="lucide:brush"></span>
+                                </div>
+                                <div>
+                                    <h4>每周梳毛</h4>
+                                    <p>短毛但掉毛厉害，每周梳2-3次能减少满屋飘毛</p>
+                                </div>
+                            </div>
+                            <div class="care-item">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="lucide:activity"></span>
+                                </div>
+                                <div>
+                                    <h4>适当运动</h4>
+                                    <p>虽然懒，但还是要陪它玩，不然真会胖到站不起来</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 侧边栏 -->
+                <aside class="sidebar">
+                    <div class="sidebar-card">
+                        <h3>领养这只猫</h3>
+                        <div class="adopt-preview">
+                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200" alt="英短">
+                            <h4>随机生成</h4>
+                            <p>你的英短会长什么样？</p>
+                        </div>
+                        <a href="/adopt?breed=british-shorthair" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            开始领养
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="/"><span class="iconify" data-icon="lucide:home"></span></a>
+        <a href="/breeds"><span class="iconify" data-icon="lucide:search"></span></a>
+        <a href="/adopt"><span class="iconify" data-icon="lucide:heart"></span></a>
+        <a href="/my-cats"><span class="iconify" data-icon="lucide:cat"></span></a>
+        <a href="/room"><span class="iconify" data-icon="lucide:sofa"></span></a>
+    </nav>
+</body>
+</html>
