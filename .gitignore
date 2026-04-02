@@ -1,0 +1,9 @@
+node_modules/
+.next/
+target/
+*.class
+*.jar
+*.log
+.DS_Store
+*.iml
+.idea/
