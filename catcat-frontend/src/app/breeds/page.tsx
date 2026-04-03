@@ -185,7 +185,7 @@ export default function BreedsPage() {
   const origins = useMemo(() => getUniqueOrigins(breeds), [breeds])
 
   // 热门原产地
-  const popularOrigins = ['United Kingdom', 'USA', 'Thailand', 'Persia', 'Japan', 'China']
+  const popularOrigins = ['英国', '美国', '泰国', '日本', '中国', '埃及']
 
   if (loading) {
     return (
@@ -254,11 +254,8 @@ export default function BreedsPage() {
                   {origin}
                 </button>
               ))}
-          </div>
-
-          {origins.length > 6 && (
-            <div className="filter-chips secondary">
-              {origins
+            {origins.length > 6 &&
+              origins
                 .filter(origin => !popularOrigins.some(p => origin.includes(p)))
                 .slice(0, 4)
                 .map(origin => (
@@ -274,8 +271,7 @@ export default function BreedsPage() {
                     {origin}
                   </button>
                 ))}
-            </div>
-          )}
+          </div>
         </section>
 
         {/* 结果统计 */}
@@ -395,10 +391,10 @@ export default function BreedsPage() {
 
         /* 筛选栏 */
         .filter-bar {
-          padding: 2rem 6rem;
+          padding: 1.5rem 6rem;
           display: flex;
           flex-wrap: wrap;
-          gap: 1.5rem;
+          gap: 1rem;
           align-items: center;
           border-bottom: 1px solid var(--bg-tertiary);
           background: var(--white);
@@ -441,10 +437,12 @@ export default function BreedsPage() {
           display: flex;
           gap: 0.5rem;
           flex-wrap: wrap;
+          flex: 1 1 auto;
+          min-width: 0;
         }
 
         .filter-chips.secondary {
-          margin-left: auto;
+          margin-left: 0;
         }
 
         .chip {

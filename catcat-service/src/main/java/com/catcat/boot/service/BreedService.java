@@ -26,6 +26,7 @@ public class BreedService {
     private final BreedMapper breedMapper;
     private final CatApiAdapter catApiAdapter;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final OssService ossService;
 
     private static final String BREED_CACHE_KEY = "breed:";
     private static final String BREED_LIST_CACHE_KEY = "breed:list:all";
@@ -113,6 +114,19 @@ public class BreedService {
     }
 
     /**
+     * 更新品种图片 URL
+     */
+    public void updateImageUrl(String breedId, String imageUrl) {
+        BreedEntity entity = selectByBreedId(breedId);
+        if (entity != null) {
+            entity.setImageUrl(imageUrl);
+            breedMapper.updateById(entity);
+            redisTemplate.delete(BREED_CACHE_KEY + breedId);
+            redisTemplate.delete(BREED_LIST_CACHE_KEY);
+        }
+    }
+
+    /**
      * 根据品种名称搜索
      */
     public List<BreedEntity> searchBreeds(String keyword) {
@@ -168,9 +182,32 @@ public class BreedService {
             entity.setWeightMetric(dto.getWeight().getMetric());
         }
 
-        if (dto.getImage() != null) {
-            entity.setImageUrl(dto.getImage().getUrl());
+        // 获取图片源 URL
+        String sourceUrl = null;
+        if (dto.getImage() != null && dto.getImage().getUrl() != null) {
+            sourceUrl = dto.getImage().getUrl();
+        } else if (dto.getReferenceImageId() != null) {
+            sourceUrl = catApiAdapter.getBreedImage(dto.getReferenceImageId());
         }
+
+        if (sourceUrl != null) {
+            String ext = extractExtension(sourceUrl, "jpg");
+            String ossPath = "breed/" + dto.getId() + "." + ext;
+            String ossUrl = ossService.uploadFromUrl(ossPath, sourceUrl);
+            if (ossUrl != null) {
+                entity.setImageUrl(ossUrl);
+            } else {
+                log.warn("品种图片上传 OSS 失败，使用原始 URL: breedId={}", dto.getId());
+                entity.setImageUrl(sourceUrl);
+            }
+        }
+    }
+
+    /**
+     * 清除品种缓存（公开给管理员用）
+     */
+    public void clearCache() {
+        clearBreedCache();
     }
 
     /**
@@ -186,5 +223,23 @@ public class BreedService {
                 redisTemplate.delete(BREED_CACHE_KEY + breed.getBreedId());
             }
         }
+    }
+
+    /**
+     * 从 URL 中提取文件扩展名
+     */
+    private String extractExtension(String url, String defaultExt) {
+        if (url == null) {
+            return defaultExt;
+        }
+        String path = url.split("\\?")[0];
+        int lastDot = path.lastIndexOf('.');
+        if (lastDot > 0 && lastDot > path.lastIndexOf('/')) {
+            String ext = path.substring(lastDot + 1).toLowerCase();
+            if (ext.equals("jpg") || ext.equals("jpeg") || ext.equals("png") || ext.equals("gif") || ext.equals("webp")) {
+                return ext;
+            }
+        }
+        return defaultExt;
     }
 }
