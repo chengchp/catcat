@@ -94,8 +94,8 @@ cat-api:
 aliyun:
   oss:
     endpoint: ${OSS_ENDPOINT:oss-ap-southeast-1.aliyuncs.com}
-    access-key-id: ${OSS_ACCESS_KEY_ID:REDACTED}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET:REDACTED}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
     bucket-name: ${OSS_BUCKET_NAME:chp-catcat}
     url-prefix: ${OSS_URL_PREFIX:https://chp-catcat.oss-ap-southeast-1.aliyuncs.com}
 
