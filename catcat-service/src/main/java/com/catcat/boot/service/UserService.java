@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,50 +33,70 @@ public class UserService {
     private static final long CACHE_EXPIRE_DAYS = 7;
 
     /**
-     * 用户注册
+     * 用户注册（邮箱注册）
      */
     public UserVO register(RegisterRequest request) {
-        // 检查用户名是否已存在
-        if (isUsernameExists(request.getUsername())) {
-            throw new BusinessException("用户名已存在");
+        // 参数校验
+        if (!StringUtils.hasText(request.getEmail())) {
+            throw new BusinessException("邮箱不能为空");
+        }
+        if (!StringUtils.hasText(request.getNickname())) {
+            throw new BusinessException("昵称不能为空");
         }
 
         // 检查邮箱是否已注册
-        if (request.getEmail() != null && isEmailExists(request.getEmail())) {
-            throw new BusinessException("邮箱已被注册");
+        if (isEmailExists(request.getEmail())) {
+            throw new BusinessException("该邮箱已被注册");
+        }
+
+        // 从邮箱自动生成用户名（取 @ 前的部分）
+        String username = request.getEmail().split("@")[0];
+        // 如果用户名已存在，追加数字后缀
+        if (isUsernameExists(username)) {
+            int suffix = 1;
+            while (isUsernameExists(username + suffix)) {
+                suffix++;
+            }
+            username = username + suffix;
         }
 
         // 创建用户
         UserEntity user = new UserEntity();
-        user.setUsername(request.getUsername());
+        user.setUsername(username);
         user.setPassword(encryptPassword(request.getPassword()));
-        user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
+        user.setNickname(request.getNickname());
         user.setEmail(request.getEmail());
 
         userMapper.insert(user);
-        log.info("用户注册成功: {}", request.getUsername());
+        log.info("用户注册成功: email={}, username={}", request.getEmail(), username);
 
         return convertToVO(user);
     }
 
     /**
-     * 用户登录
+     * 用户登录（支持邮箱或用户名）
      */
     public String login(LoginRequest request) {
-        // 查询用户
-        UserEntity user = findByUsername(request.getUsername());
+        String account = request.getAccount();
+
+        // 先尝试邮箱查找，再尝试用户名查找
+        UserEntity user = findByEmail(account);
         if (user == null) {
-            throw new BusinessException("用户名或密码错误");
+            user = findByUsername(account);
+        }
+
+        if (user == null) {
+            throw new BusinessException("账号或密码错误");
         }
 
         // 验证密码
         if (!user.getPassword().equals(encryptPassword(request.getPassword()))) {
-            throw new BusinessException("用户名或密码错误");
+            throw new BusinessException("账号或密码错误");
         }
 
         // 生成Token
         String token = JwtUtil.generateToken(user.getId(), user.getUsername());
-        log.info("用户登录成功: {}", request.getUsername());
+        log.info("用户登录成功: {}", user.getUsername());
 
         // 将Token存入Redis
         redisTemplate.opsForValue().set("token:" + user.getId(), token, CACHE_EXPIRE_DAYS, TimeUnit.DAYS);
@@ -139,6 +160,14 @@ public class UserService {
     public UserEntity findByUsername(String username) {
         return userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getUsername, username));
+    }
+
+    /**
+     * 根据邮箱查询用户
+     */
+    public UserEntity findByEmail(String email) {
+        return userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
+                .eq(UserEntity::getEmail, email));
     }
 
     /**

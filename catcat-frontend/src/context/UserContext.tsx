@@ -7,8 +7,8 @@ interface UserContextType {
   user: User | null
   isLoading: boolean
   isLoggedIn: boolean
-  login: (username: string, password: string) => Promise<void>
-  register: (data: { username: string; password: string; nickname?: string; email?: string }) => Promise<void>
+  login: (account: string, password: string) => Promise<void>
+  register: (data: { email: string; password: string; nickname: string }) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
 }
@@ -44,8 +44,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = async (username: string, password: string) => {
-    const response = await authApi.login(username, password)
+  const login = async (account: string, password: string) => {
+    const response = await authApi.login(account, password)
     if (response.success) {
       setApiToken(response.data.token)
       await checkAuth()
@@ -54,11 +54,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const register = async (data: { username: string; password: string; nickname?: string; email?: string }) => {
+  const register = async (data: { email: string; password: string; nickname: string }) => {
     const response = await authApi.register(data)
     if (response.success) {
       // 注册后自动登录
-      await login(data.username, data.password)
+      await login(data.email, data.password)
     } else {
       throw new Error('注册失败')
     }

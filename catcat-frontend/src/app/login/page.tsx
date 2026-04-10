@@ -9,11 +9,17 @@ import { useUser } from '@/context/UserContext'
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useUser()
-  const [username, setUsername] = useState('')
+  const [account, setAccount] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false)
+  const [forgotPwdMsg, setForgotPwdMsg] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 猫咪是否捂眼：密码框聚焦或有内容时捂眼
+  const catCoveringEyes = passwordFocused || password.length > 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,29 +27,81 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login(username, password)
+      await login(account, password)
       router.push('/')
     } catch (err) {
-      setError('用户名或密码错误')
+      setError('账号或密码错误')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleForgotPassword = () => {
+    setForgotPwdMsg('该功能正在开发中，敬请期待 🐾')
+    setTimeout(() => setForgotPwdMsg(''), 3000)
+  }
+
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center px-4">
-      <div className="auth-container">
-        {/* Logo */}
-        <div className="auth-logo">
-          <Link href="/" className="flex items-center gap-2">
-            <Cat size={32} className="text-caramel" />
-            <span className="font-display text-2xl font-bold text-warmblack">CatCat</span>
-          </Link>
+    <div className="login-page">
+      {/* 左侧：猫猫摄影图（桌面端） */}
+      <div className="login-hero">
+        <img
+          src="https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=1200"
+          alt=""
+          className="login-hero-img"
+        />
+        <div className="login-hero-overlay" />
+        <div className="login-hero-content">
+          <div className="login-hero-brand">
+            <span className="login-hero-logo">
+              <Cat size={36} />
+            </span>
+            <h2 className="login-hero-title">CatCat</h2>
+          </div>
+          <p className="login-hero-desc">做一个快乐的铲屎官</p>
+        </div>
+      </div>
+
+      {/* 右侧：登录表单 */}
+      <div className="login-form-side">
+        {/* 猫剪影 - 右下角 */}
+        <div className="cat-silhouette">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M100 180C55 180 30 145 30 110C30 80 45 55 65 40L50 10L85 35C90 33 95 32 100 32C105 32 110 33 115 35L150 10L135 40C155 55 170 80 170 110C170 145 145 180 100 180Z"
+              fill="currentColor"
+              opacity="0.06"
+            />
+            <circle cx="75" cy="100" r="8" fill="currentColor" opacity="0.08" />
+            <circle cx="125" cy="100" r="8" fill="currentColor" opacity="0.08" />
+            <ellipse cx="100" cy="120" rx="6" ry="4" fill="currentColor" opacity="0.07" />
+            <path d="M94 125Q100 132 106 125" stroke="currentColor" strokeWidth="2" opacity="0.07" fill="none" />
+          </svg>
         </div>
 
-        {/* Form Card */}
-        <div className="auth-card">
-          <h1 className="auth-title">欢迎回来</h1>
+        <div className="login-form-container">
+          {/* 返回首页 */}
+          <Link href="/" className="back-home-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            返回首页
+          </Link>
+
+          {/* 猫咪头像 + 捂眼动效 */}
+          <div className="cat-avatar-wrapper">
+            <div className={`cat-avatar ${catCoveringEyes ? 'covering' : ''}`}>
+              <div className="cat-face">
+                <Cat size={32} className="cat-face-icon" />
+                {/* 猫爪 - 左 */}
+                <div className="cat-paw cat-paw-left">🐾</div>
+                {/* 猫爪 - 右 */}
+                <div className="cat-paw cat-paw-right">🐾</div>
+              </div>
+            </div>
+          </div>
+
+          <h1 className="auth-title">好久不见，铲屎官</h1>
           <p className="auth-subtitle">登录你的 CatCat 账户</p>
 
           {error && (
@@ -54,14 +112,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="username" className="form-label">用户名</label>
+              <label htmlFor="account" className="form-label">邮箱/用户名</label>
               <input
                 type="text"
-                id="username"
+                id="account"
                 className="form-input"
-                placeholder="请输入用户名"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="请输入邮箱或用户名"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
                 required
               />
             </div>
@@ -76,6 +134,8 @@ export default function LoginPage() {
                   placeholder="请输入密码"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
                   required
                 />
                 <button
@@ -89,13 +149,32 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* 记住我 + 忘记密码 */}
+            <div className="form-options">
+              <label className="remember-me">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>记住我</span>
+              </label>
+              <button type="button" className="forgot-pwd-link" onClick={handleForgotPassword}>
+                忘记密码？
+              </button>
+            </div>
+
+            {forgotPwdMsg && (
+              <div className="forgot-pwd-toast">{forgotPwdMsg}</div>
+            )}
+
             <button
               type="submit"
               className="auth-submit-btn"
               disabled={loading}
             >
               {loading ? (
-                <span className="loading-spinner" />
+                <span className="loading-paw">🐾</span>
               ) : (
                 '登录'
               )}
@@ -111,198 +190,8 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-
-        {/* Back to Home */}
-        <Link href="/" className="back-home-link">
-          ← 返回首页
-        </Link>
       </div>
 
-      <style jsx>{`
-        .auth-container {
-          width: 100%;
-          max-width: 420px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .auth-logo {
-          margin-bottom: 2rem;
-        }
-
-        .auth-card {
-          width: 100%;
-          background: var(--white);
-          border-radius: 24px;
-          padding: 2.5rem;
-          box-shadow: 0 8px 40px var(--shadow);
-        }
-
-        .auth-title {
-          font-family: var(--font-display);
-          font-size: 1.75rem;
-          font-weight: 700;
-          color: var(--text-primary);
-          text-align: center;
-          margin-bottom: 0.5rem;
-        }
-
-        .auth-subtitle {
-          font-family: var(--font-body);
-          color: var(--text-secondary);
-          text-align: center;
-          margin-bottom: 2rem;
-        }
-
-        .auth-error {
-          background: rgba(229, 115, 115, 0.1);
-          color: #E57373;
-          padding: 0.875rem 1rem;
-          border-radius: 12px;
-          font-family: var(--font-display);
-          font-size: 0.875rem;
-          margin-bottom: 1.5rem;
-          text-align: center;
-        }
-
-        .auth-form {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .form-label {
-          font-family: var(--font-display);
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 0.875rem 1rem;
-          border: 2px solid var(--bg-tertiary);
-          border-radius: 12px;
-          font-family: var(--font-display);
-          font-size: 0.9375rem;
-          background: var(--bg-primary);
-          transition: all 0.3s var(--ease-out-expo);
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: var(--accent);
-          background: var(--white);
-        }
-
-        .form-input::placeholder {
-          color: var(--text-muted);
-        }
-
-        .password-input-wrapper {
-          position: relative;
-        }
-
-        .password-input-wrapper .form-input {
-          padding-right: 3rem;
-        }
-
-        .password-toggle {
-          position: absolute;
-          right: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: var(--text-muted);
-          cursor: pointer;
-          padding: 0.25rem;
-          transition: color 0.3s;
-        }
-
-        .password-toggle:hover {
-          color: var(--accent);
-        }
-
-        .auth-submit-btn {
-          width: 100%;
-          padding: 1rem;
-          background: var(--accent);
-          color: var(--white);
-          border: none;
-          border-radius: 12px;
-          font-family: var(--font-display);
-          font-size: 1rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.3s var(--ease-out-expo);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 0.5rem;
-        }
-
-        .auth-submit-btn:hover:not(:disabled) {
-          background: var(--accent-hover);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(200, 149, 108, 0.4);
-        }
-
-        .auth-submit-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .loading-spinner {
-          width: 20px;
-          height: 20px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .auth-footer {
-          margin-top: 2rem;
-          text-align: center;
-          font-family: var(--font-body);
-          color: var(--text-secondary);
-        }
-
-        .auth-link {
-          color: var(--accent);
-          font-weight: 600;
-          margin-left: 0.5rem;
-          transition: color 0.3s;
-        }
-
-        .auth-link:hover {
-          color: var(--accent-hover);
-        }
-
-        .back-home-link {
-          margin-top: 2rem;
-          color: var(--text-muted);
-          font-family: var(--font-display);
-          font-size: 0.875rem;
-          transition: color 0.3s;
-        }
-
-        .back-home-link:hover {
-          color: var(--accent);
-        }
-      `}</style>
     </div>
   )
 }

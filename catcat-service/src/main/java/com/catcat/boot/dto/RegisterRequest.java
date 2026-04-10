@@ -9,9 +9,9 @@ import lombok.Data;
 public class RegisterRequest {
 
     /**
-     * 用户名
+     * 邮箱（必填，作为账号标识）
      */
-    private String username;
+    private String email;
 
     /**
      * 密码
@@ -19,12 +19,7 @@ public class RegisterRequest {
     private String password;
 
     /**
-     * 昵称
+     * 昵称（必填，展示名）
      */
     private String nickname;
-
-    /**
-     * 邮箱
-     */
-    private String email;
 }

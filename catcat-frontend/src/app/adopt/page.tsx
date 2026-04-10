@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Sparkles, RefreshCw, Home, Check } from 'lucide-react'
+import { Sparkles, RefreshCw, Home, Check, Search } from 'lucide-react'
 import { breedApi, catApi, type Breed, type Cat } from '@/lib/api'
 import { useUser } from '@/context/UserContext'
+import dynamic from 'next/dynamic'
+
+const CatModel3D = dynamic(() => import('@/components/CatModel3D'), { ssr: false })
 import { useRouter } from 'next/navigation'
 
 interface CatDNA {
@@ -24,9 +27,23 @@ export default function AdoptPage() {
   const [currentImage, setCurrentImage] = useState('')
   const [step, setStep] = useState(1)
   const [error, setError] = useState('')
+  const [selectedBreedId, setSelectedBreedId] = useState<string | null>(null)
+  const [searchKeyword, setSearchKeyword] = useState('')
 
   const { isLoggedIn, isLoading: authLoading } = useUser()
   const router = useRouter()
+
+  // 按搜索关键词过滤品种
+  const filteredBreeds = useMemo(() => {
+    if (!searchKeyword) return breeds
+    const keyword = searchKeyword.toLowerCase()
+    return breeds.filter(
+      breed =>
+        breed.name.toLowerCase().includes(keyword) ||
+        breed.temperament?.toLowerCase().includes(keyword) ||
+        breed.origin?.toLowerCase().includes(keyword)
+    )
+  }, [breeds, searchKeyword])
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -48,8 +65,6 @@ export default function AdoptPage() {
   }
 
   const handleAdopt = async () => {
-    if (breeds.length === 0) return
-
     setIsRandomizing(true)
     setAdoptedCat(null)
     setCatDNA(null)
@@ -57,46 +72,56 @@ export default function AdoptPage() {
     setStep(1)
     setError('')
 
-    // 随机切换图片制造悬念
-    let switchCount = 0
-    const switchInterval = setInterval(() => {
-      const randomBreed = breeds[Math.floor(Math.random() * breeds.length)]
-      if (randomBreed.imageUrl) {
-        setCurrentImage(randomBreed.imageUrl)
+    // 如果选中了品种，直接展示该品种图片；否则随机切换
+    if (selectedBreedId) {
+      const breed = breeds.find(b => b.breedId === selectedBreedId)
+      if (breed?.imageUrl) {
+        setCurrentImage(breed.imageUrl)
       }
-      switchCount++
-      if (switchCount >= 10) {
-        clearInterval(switchInterval)
-        finalizeAdopt()
-      }
-    }, 150)
-
-    const finalizeAdopt = async () => {
-      try {
-        const response = await catApi.adopt()
-        if (response.success) {
-          const cat = response.data
-          setAdoptedCat(cat)
-          // 解析后端返回的DNA
-          try {
-            const dnaData = JSON.parse(cat.dna)
-            setCatDNA(dnaData)
-          } catch {
-            setCatDNA({
-              color: '未知',
-              pattern: '未知',
-              eyeColor: '未知',
-            })
-          }
-          setCurrentImage(cat.imageUrl || '')
-          setStep(2)
+      // 短暂展示后直接领养
+      setTimeout(() => finalizeAdopt(), 600)
+    } else {
+      let switchCount = 0
+      const switchInterval = setInterval(() => {
+        const randomBreed = breeds[Math.floor(Math.random() * breeds.length)]
+        if (randomBreed.imageUrl) {
+          setCurrentImage(randomBreed.imageUrl)
         }
-      } catch (error) {
-        console.error('Failed to adopt:', error)
-        setError('领养失败，请重试')
-      } finally {
-        setIsRandomizing(false)
+        switchCount++
+        if (switchCount >= 10) {
+          clearInterval(switchInterval)
+          finalizeAdopt()
+        }
+      }, 150)
+    }
+  }
+
+  const finalizeAdopt = async () => {
+    try {
+      const response = await catApi.adopt({
+        breedId: selectedBreedId ?? undefined,
+      })
+      if (response.success) {
+        const cat = response.data
+        setAdoptedCat(cat)
+        try {
+          const dnaData = JSON.parse(cat.dna)
+          setCatDNA(dnaData)
+        } catch {
+          setCatDNA({
+            color: '未知',
+            pattern: '未知',
+            eyeColor: '未知',
+          })
+        }
+        setCurrentImage(cat.imageUrl || '')
+        setStep(2)
       }
+    } catch (error) {
+      console.error('Failed to adopt:', error)
+      setError('领养失败，请重试')
+    } finally {
+      setIsRandomizing(false)
     }
   }
 
@@ -109,6 +134,7 @@ export default function AdoptPage() {
     setCatDNA(null)
     setCatName('')
     setCurrentImage('')
+    setSelectedBreedId(null)
     setStep(1)
     setError('')
   }
@@ -119,7 +145,7 @@ export default function AdoptPage() {
       <div className="adopt-steps">
         <div className={`step ${step >= 1 ? (step > 1 ? 'done' : 'active') : ''}`}>
           <div className="step-num">{step > 1 ? <Check size={16} /> : '1'}</div>
-          <div className="step-label">随机抽取</div>
+          <div className="step-label">选择品种</div>
         </div>
         <div className={`step ${step >= 2 ? (step > 2 ? 'done' : 'active') : ''}`}>
           <div className="step-num">{step > 2 ? <Check size={16} /> : '2'}</div>
@@ -138,30 +164,76 @@ export default function AdoptPage() {
 
       {/* 领养卡片 */}
       <div className="adopt-card">
-        {/* 初始/抽卡状态 */}
+        {/* 步骤 1：选择品种 + 领养 */}
         <div className={step === 1 ? '' : 'hidden'}>
           <div className="adopt-header">
             <h1>云领养</h1>
-            <p>命运的齿轮开始转动...</p>
+            <p>选择你喜欢的品种，或随机领养</p>
           </div>
 
-          <div className="cat-display">
-            {isRandomizing ? (
-              <Image
-                src={currentImage || 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400'}
-                alt="随机猫咪"
-                width={180}
-                height={180}
-                className="cat-avatar randomizing"
-              />
-            ) : (
-              <div className="cat-question-mark">?</div>
-            )}
-          </div>
+          {isRandomizing ? (
+            <>
+              <div className="cat-display">
+                <Image
+                  src={currentImage || 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400'}
+                  alt="随机猫咪"
+                  width={180}
+                  height={180}
+                  className="cat-avatar randomizing"
+                />
+              </div>
+              <p className="cat-info">命运抽签中...</p>
+            </>
+          ) : (
+            <>
+              {/* 搜索框 */}
+              <div className="breed-search-wrapper">
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="搜索品种..."
+                  className="breed-search-input"
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                />
+              </div>
 
-          <p className="cat-info">
-            {isRandomizing ? '命运抽签中...' : '点击下方按钮，随机领取一只猫'}
-          </p>
+              {/* 品种列表 */}
+              <div className="breed-list">
+                {filteredBreeds.map((breed) => (
+                  <div
+                    key={breed.breedId}
+                    className={`breed-option ${selectedBreedId === breed.breedId ? 'selected' : ''}`}
+                    onClick={() => setSelectedBreedId(
+                      selectedBreedId === breed.breedId ? null : breed.breedId
+                    )}
+                  >
+                    {breed.imageUrl ? (
+                      <Image
+                        src={breed.imageUrl}
+                        alt={breed.name}
+                        width={40}
+                        height={40}
+                        className="breed-option-img"
+                      />
+                    ) : (
+                      <div className="breed-option-img breed-option-placeholder">🐱</div>
+                    )}
+                    <span className="breed-option-name">{breed.name}</span>
+                  </div>
+                ))}
+                {filteredBreeds.length === 0 && (
+                  <div className="breed-list-empty">没有找到匹配的品种</div>
+                )}
+              </div>
+
+              <p className="cat-info">
+                {selectedBreedId
+                  ? `已选择：${breeds.find(b => b.breedId === selectedBreedId)?.name}`
+                  : '点击品种选择，或直接随机领养'}
+              </p>
+            </>
+          )}
 
           <div className="adopt-actions">
             <button
@@ -170,26 +242,20 @@ export default function AdoptPage() {
               className="btn btn-primary w-full justify-center"
             >
               <Sparkles size={18} />
-              开始领养
+              {selectedBreedId ? '领养选中的品种' : '随机领养'}
             </button>
           </div>
         </div>
 
-        {/* 成功状态 - 起名字 */}
+        {/* 步骤 2：起名字 */}
         <div className={step === 2 ? '' : 'hidden'}>
           <div className="adopt-header">
             <h1>恭喜！</h1>
             <p>你领养了一只猫</p>
           </div>
 
-          <div className="cat-display">
-            <Image
-              src={adoptedCat?.imageUrl || currentImage || 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400'}
-              alt={adoptedCat?.name || '你的猫'}
-              width={180}
-              height={180}
-              className="cat-avatar revealed"
-            />
+          <div className="cat-display-3d">
+            <CatModel3D animation="Idle" enableDrag autoRotate scale={0.7} />
           </div>
 
           <h2 className="cat-name">{adoptedCat?.name || '小可爱'}</h2>
@@ -236,7 +302,7 @@ export default function AdoptPage() {
           </div>
         </div>
 
-        {/* 完成状态 */}
+        {/* 步骤 3：完成 */}
         <div className={step === 3 ? '' : 'hidden'}>
           <div className="adopt-header">
             <div className="success-icon">
@@ -246,14 +312,8 @@ export default function AdoptPage() {
             <p>{catName || adoptedCat?.name} 已经成为你的猫了！</p>
           </div>
 
-          <div className="cat-display">
-            <Image
-              src={adoptedCat?.imageUrl || currentImage || 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400'}
-              alt={catName || adoptedCat?.name || '你的猫'}
-              width={180}
-              height={180}
-              className="cat-avatar revealed"
-            />
+          <div className="cat-display-3d">
+            <CatModel3D animation="Idle" enableDrag autoRotate scale={0.7} />
           </div>
 
           <div className="success-actions">
@@ -360,10 +420,10 @@ export default function AdoptPage() {
         .adopt-card {
           background: var(--white);
           border-radius: 32px;
-          padding: 3rem;
+          padding: 2.5rem;
           box-shadow: 0 30px 80px var(--shadow-strong);
           text-align: center;
-          max-width: 420px;
+          max-width: 480px;
           width: 100%;
           position: relative;
           overflow: hidden;
@@ -380,7 +440,7 @@ export default function AdoptPage() {
         }
 
         .adopt-header {
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
 
         .adopt-header h1 {
@@ -392,6 +452,106 @@ export default function AdoptPage() {
 
         .adopt-header p {
           color: var(--text-secondary);
+        }
+
+        /* 品种搜索 */
+        .breed-search-wrapper {
+          position: relative;
+          margin-bottom: 1rem;
+        }
+
+        .breed-search-input {
+          width: 100%;
+          padding: 0.75rem 0.75rem 0.75rem 2.25rem;
+          border: 2px solid var(--bg-tertiary);
+          border-radius: 12px;
+          font-family: var(--font-display);
+          font-size: 0.875rem;
+          transition: border-color 0.3s;
+          box-sizing: border-box;
+        }
+
+        .breed-search-input:focus {
+          outline: none;
+          border-color: var(--accent);
+        }
+
+        /* 品种列表 */
+        .breed-list {
+          max-height: 280px;
+          overflow-y: auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
+          padding: 0.25rem;
+          margin-bottom: 1rem;
+        }
+
+        .breed-option {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          border-radius: 12px;
+          border: 2px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+        }
+
+        .breed-option:hover {
+          background: var(--bg-secondary);
+        }
+
+        .breed-option.selected {
+          border-color: var(--accent);
+          background: rgba(200, 149, 108, 0.08);
+        }
+
+        .breed-option-img {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+
+        .breed-option-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-secondary);
+          font-size: 1.25rem;
+        }
+
+        .breed-option-name {
+          font-family: var(--font-display);
+          font-weight: 600;
+          font-size: 0.8125rem;
+          color: var(--text-primary);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .breed-list-empty {
+          grid-column: 1 / -1;
+          text-align: center;
+          color: var(--text-muted);
+          padding: 2rem 0;
+          font-size: 0.875rem;
+        }
+
+        /* 3D 猫展示区 */
+        .cat-display-3d {
+          width: 200px;
+          height: 200px;
+          margin: 2rem auto;
+          border-radius: 50%;
+          border: 6px solid var(--accent);
+          box-shadow: 0 15px 40px var(--shadow);
+          overflow: hidden;
+          animation: bounce-in 0.6s var(--ease-out-back);
         }
 
         /* 猫猫展示区 */
@@ -417,21 +577,6 @@ export default function AdoptPage() {
 
         .cat-avatar.randomizing {
           animation: shake 0.5s infinite;
-        }
-
-        .cat-question-mark {
-          width: 180px;
-          height: 180px;
-          border-radius: 50%;
-          background: var(--bg-secondary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: var(--font-display);
-          font-weight: 900;
-          font-size: 4rem;
-          color: var(--text-muted);
-          margin: 0 auto;
         }
 
         .cat-info {
@@ -518,7 +663,7 @@ export default function AdoptPage() {
         .adopt-actions {
           display: flex;
           gap: 1rem;
-          margin-top: 2rem;
+          margin-top: 1.5rem;
         }
 
         .adopt-actions .btn {

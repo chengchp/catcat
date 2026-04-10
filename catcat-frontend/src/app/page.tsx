@@ -8,7 +8,7 @@ export default async function HomePage() {
   // 获取品种列表
   let breeds: any[] = []
   try {
-    const response = await fetch('http://localhost:8080/api/breeds', { cache: 'no-store' })
+    const response = await fetch('http://localhost:8089/api/breeds', { cache: 'no-store' })
     if (response.ok) {
       const data = await response.json()
       breeds = data.data?.slice(0, 5) || []

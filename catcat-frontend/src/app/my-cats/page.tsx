@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Heart, Star, Home, Crown, Trash2 } from 'lucide-react'
 import { catApi, type Cat } from '@/lib/api'
 import { useUser } from '@/context/UserContext'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+const CatModel3D = dynamic(() => import('@/components/CatModel3D'), { ssr: false })
 
 export default function MyCatsPage() {
   const [cats, setCats] = useState<Cat[]>([])
@@ -97,18 +99,7 @@ export default function MyCatsPage() {
               </div>
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden bg-white/20 flex-shrink-0">
-                  {currentCat.imageUrl ? (
-                    <Image
-                      src={currentCat.imageUrl}
-                      alt={currentCat.name}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-6xl">🐱</span>
-                    </div>
-                  )}
+                  <CatModel3D animation="Idle" enableDrag scale={0.5} />
                 </div>
                 <div className="flex-1">
                   <h2 className="font-display text-3xl font-bold mb-2">
@@ -175,18 +166,7 @@ export default function MyCatsPage() {
                     )}
 
                     <div className="aspect-square relative bg-caramel/10">
-                      {cat.imageUrl ? (
-                        <Image
-                          src={cat.imageUrl}
-                          alt={cat.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-8xl">🐱</span>
-                        </div>
-                      )}
+                      <CatModel3D animation="Idle" scale={0.4} />
                     </div>
 
                     <div className="p-5">

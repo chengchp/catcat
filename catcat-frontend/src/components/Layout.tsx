@@ -42,52 +42,57 @@ function UserNav() {
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const isAuthPage = pathname === '/login' || pathname === '/register'
 
   return (
     <>
-      {/* 左侧固定导航 - 桌面端 */}
-      <nav className="side-nav">
-        <Link href="/" className="nav-logo">
-          <span className="logo-icon">🐾</span>
-          <span className="logo-text">CatCat</span>
-        </Link>
+      {/* 左侧固定导航 - 桌面端（登录/注册页隐藏） */}
+      {!isAuthPage && (
+        <nav className="side-nav">
+          <Link href="/" className="nav-logo">
+            <span className="logo-icon">🐾</span>
+            <span className="logo-text">CatCat</span>
+          </Link>
 
-        <ul className="nav-links">
+          <ul className="nav-links">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              return (
+                <li key={item.href} className={isActive ? 'active' : ''}>
+                  <Link href={item.href}>
+                    <Icon size={20} />
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+
+          <UserNav />
+        </nav>
+      )}
+
+      {/* 主内容区 */}
+      <main className={`main-content${isAuthPage ? ' fullscreen' : ''}`}>
+        {children}
+      </main>
+
+      {/* 移动端底部导航（登录/注册页隐藏） */}
+      {!isAuthPage && (
+        <nav className="mobile-nav">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             return (
-              <li key={item.href} className={isActive ? 'active' : ''}>
-                <Link href={item.href}>
-                  <Icon size={20} />
-                  <span>{item.label}</span>
-                </Link>
-              </li>
+              <Link key={item.href} href={item.href} className={isActive ? 'active' : ''}>
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </Link>
             )
           })}
-        </ul>
-
-        <UserNav />
-      </nav>
-
-      {/* 主内容区 */}
-      <main className="main-content">
-        {children}
-      </main>
-
-      {/* 移动端底部导航 */}
-      <nav className="mobile-nav">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
-          return (
-            <Link key={item.href} href={item.href} className={isActive ? 'active' : ''}>
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
+        </nav>
+      )}
     </>
   )
 }

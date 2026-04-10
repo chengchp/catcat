@@ -9,9 +9,9 @@ import lombok.Data;
 public class LoginRequest {
 
     /**
-     * 用户名
+     * 邮箱或用户名
      */
-    private String username;
+    private String account;
 
     /**
      * 密码

@@ -43,22 +43,30 @@ public class CatService {
      */
     @Transactional
     public CatVO adoptCat(Long userId, AdoptRequest request) {
-        // 获取所有品种
-        List<BreedEntity> breeds = breedService.getAllBreeds();
-        if (breeds == null || breeds.isEmpty()) {
-            throw new BusinessException("暂无可领养的品种，请先同步品种数据");
+        // 确定品种：指定 or 随机
+        BreedEntity selectedBreed;
+        String requestedBreedId = request.getBreedId();
+
+        if (requestedBreedId != null && !requestedBreedId.isEmpty()) {
+            selectedBreed = breedService.getBreedById(requestedBreedId);
+            if (selectedBreed == null) {
+                throw new BusinessException("指定的品种不存在");
+            }
+        } else {
+            List<BreedEntity> breeds = breedService.getAllBreeds();
+            if (breeds == null || breeds.isEmpty()) {
+                throw new BusinessException("暂无可领养的品种，请先同步品种数据");
+            }
+            selectedBreed = breeds.get(random.nextInt(breeds.size()));
         }
 
-        // 随机选择一个品种
-        BreedEntity randomBreed = breeds.get(random.nextInt(breeds.size()));
-
         // 生成 DNA
-        CatDNA dna = catDnaGenerator.generateByBreed(randomBreed.getBreedId());
+        CatDNA dna = catDnaGenerator.generateByBreed(selectedBreed.getBreedId());
 
         // 创建猫记录
         CatEntity cat = new CatEntity();
         cat.setUserId(userId);
-        cat.setBreedId(randomBreed.getBreedId());
+        cat.setBreedId(selectedBreed.getBreedId());
         cat.setName(request.getName() != null ? request.getName() : generateRandomName());
         cat.setDna(convertDnaToJson(dna));
         cat.setIsCurrent(false);
@@ -74,9 +82,9 @@ public class CatService {
             userMapper.updateById(user);
         }
 
-        log.info("用户 {} 领养了新猫: {} (品种: {})", userId, cat.getName(), randomBreed.getName());
+        log.info("用户 {} 领养了新猫: {} (品种: {})", userId, cat.getName(), selectedBreed.getName());
 
-        return convertToVO(cat, randomBreed);
+        return convertToVO(cat, selectedBreed);
     }
 
     /**

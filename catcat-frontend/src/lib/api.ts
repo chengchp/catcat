@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8089'
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>
@@ -63,9 +63,9 @@ export const breedApi = {
 // 猫咪相关 API
 export const catApi = {
   getMyCats: () => fetchApi<{ success: boolean; data: Cat[] }>('/api/cats'),
-  adopt: (name?: string) => fetchApi<{ success: boolean; data: Cat }>('/api/cats/adopt', {
+  adopt: (params?: { name?: string; breedId?: string }) => fetchApi<{ success: boolean; data: Cat }>('/api/cats/adopt', {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(params ?? {}),
   }),
   setCurrent: (catId: number) => fetchApi<{ success: boolean; data: Cat }>(`/api/cats/${catId}/current`, { method: 'PUT' }),
   delete: (catId: number) => fetchApi<{ success: boolean }>(`/api/cats/${catId}`, { method: 'DELETE' }),
@@ -91,12 +91,12 @@ export const roomApi = {
 
 // 用户认证相关 API
 export const authApi = {
-  login: (username: string, password: string) =>
+  login: (account: string, password: string) =>
     fetchApi<{ success: boolean; data: { token: string } }>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ account, password }),
     }),
-  register: (data: { username: string; password: string; nickname?: string; email?: string }) =>
+  register: (data: { email: string; password: string; nickname: string }) =>
     fetchApi<{ success: boolean; data: User }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
